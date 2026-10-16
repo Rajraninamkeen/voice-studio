@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Actor AI Voice Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #090d16;
+            --bg-card: #121927;
+            --bg-input: #0b111c;
+            --accent: #0ea5e9;
+            --accent-hover: #0284c7;
+            --accent-glow: rgba(14, 165, 233, 0.35);
+            --border: #1e293b;
+            --border-hover: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --error: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 24px 16px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 680px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 28px 24px;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+        }
+
+        .header p {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 8px;
+        }
+
+        .label-badge {
+            font-size: 11px;
+            background: rgba(14, 165, 233, 0.15);
+            color: #38bdf8;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: var(--text-main);
+            font-size: 14px;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 150px;
+            line-height: 1.5;
+        }
+
+        .file-upload-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .upload-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            background: #1e293b;
+            color: #cbd5e1;
+            padding: 7px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid var(--border-hover);
+            transition: all 0.2s ease;
+        }
+
+        .upload-btn:hover {
+            background: #334155;
+            color: #fff;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .character-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 10px;
+            background: var(--bg-input);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            max-height: 130px;
+            overflow-y: auto;
+        }
+
+        .chip {
+            font-size: 12px;
+            background: #1e293b;
+            color: #94a3b8;
+            padding: 5px 10px;
+            border-radius: 14px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .chip:hover {
+            background: #334155;
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        .chip:active {
+            transform: scale(0.96);
+        }
+
+        .generate-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+            color: #fff;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 14px var(--accent-glow);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px var(--accent-glow);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-box {
+            margin-top: 16px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            text-align: center;
+            display: none;
+        }
+
+        .status-box.loading {
+            display: block;
+            background: rgba(14, 165, 233, 0.1);
+            color: #38bdf8;
+            border: 1px solid rgba(14, 165, 233, 0.25);
+        }
+
+        .status-box.success {
+            display: block;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+
+        .status-box.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+
+        .audio-player-card {
+            margin-top: 16px;
+            padding: 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: none;
+        }
+
+        .audio-player-card audio {
+            width: 100%;
+            height: 40px;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🎭 Multi-Actor Voice Studio</h1>
+        <p>अपनी स्क्रिप्ट लिखें, किरदारों की आवाज़ें चुनें और 1-क्लिक में मर्ज ऑडियो पाएँ</p>
+    </div>
+
+    <!-- Backend URL Section -->
+    <div class="form-group">
+        <label for="apiUrl">
+            1. Backend Tunnel URL
+            <span class="label-badge">LocalTunnel / Ngrok</span>
+        </label>
+        <input type="text" id="apiUrl" placeholder="उदा. https://rude-rings-carry.loca.lt" autocomplete="off">
+    </div>
+
+    <!-- Pre-built Voice Bank Chips -->
+    <div class="form-group">
+        <label>
+            2. किरदार चुनें (टैप करते ही स्क्रिप्ट में जुड़ेगा)
+            <span class="label-badge">20 Voices</span>
+        </label>
+        <div class="character-chips" id="voiceBank">
+            <!-- Male Voices -->
+            <span class="chip" onclick="addActorTag('Rohan')">👨 Rohan</span>
+            <span class="chip" onclick="addActorTag('Kabir')">🎙️ Kabir</span>
+            <span class="chip" onclick="addActorTag('Amitabh')">🎬 Amitabh</span>
+            <span class="chip" onclick="addActorTag('Vikram')">💼 Vikram</span>
+            <span class="chip" onclick="addActorTag('Aman')">📖 Aman</span>
+            <!-- Female Voices -->
+            <span class="chip" onclick="addActorTag('Priya')">👩 Priya</span>
+            <span class="chip" onclick="addActorTag('Anjali')">🌸 Anjali</span>
+            <span class="chip" onclick="addActorTag('Kavya')">🎙️ Kavya</span>
+            <span class="chip" onclick="addActorTag('Pooja')">✨ Pooja</span>
+            <span class="chip" onclick="addActorTag('Neha')">🎧 Neha</span>
+            <!-- Story & Elders -->
+            <span class="chip" onclick="addActorTag('DadaJi')">👴 DadaJi</span>
+            <span class="chip" onclick="addActorTag('Dadi')">👵 Dadi</span>
+            <span class="chip" onclick="addActorTag('Sadhu')">🧘 Sadhu</span>
+            <span class="chip" onclick="addActorTag('HistoricalNarrator')">🏛️ Narrator</span>
+            <!-- Expressive & Anime -->
+            <span class="chip" onclick="addActorTag('Kid')">🧒 Kid</span>
+            <span class="chip" onclick="addActorTag('Shinchan')">🎒 Shinchan</span>
+            <span class="chip" onclick="addActorTag('Doraemon')">🤖 Doraemon</span>
+            <span class="chip" onclick="addActorTag('Villain')">🦹 Villain</span>
+            <span class="chip" onclick="addActorTag('Robot')">🦾 Robot</span>
+            <span class="chip" onclick="addActorTag('Ghost')">👻 Ghost</span>
+        </div>
+    </div>
+
+    <!-- Script Text Area -->
+    <div class="form-group">
+        <label for="scriptText">
+            3. अपनी स्क्रिप्ट तैयार करें
+            <div class="file-upload-bar">
+                <label class="upload-btn" for="scriptFileInput">
+                    📁 .txt फाइल लोड करें
+                </label>
+                <input type="file" id="scriptFileInput" accept=".txt" onchange="readScriptFile(event)">
+            </div>
+        </label>
+        <textarea id="scriptText" placeholder="Rohan: अरे प्रिया, क्या तुमने यह नया AI वॉइस सिस्टम देखा?&#10;Priya: हाँ रोहन! इसमें तो 20 अलग-अलग आवाज़ें अपने आप मर्ज हो जाती हैं।&#10;DadaJi: बहुत खूब! अब वीडियो बनाना बहुत आसान हो गया है।"></textarea>
+    </div>
+
+    <!-- Action Button -->
+    <button class="generate-btn" id="generateBtn" onclick="requestAudio()">
+        <span>⚡ ऑडियो जनरेट और डाउनलोड करें</span>
+    </button>
+
+    <!-- Status Message -->
+    <div class="status-box" id="statusBox"></div>
+
+    <!-- Audio Player Result -->
+    <div class="audio-player-card" id="audioCard">
+        <audio id="audioPlayer" controls></audio>
+    </div>
+</div>
+
+<script>
+    // Quick-insert actor tag into textarea
+    function addActorTag(actorName) {
+        const textarea = document.getElementById('scriptText');
+        const currentVal = textarea.value;
+        const prefix = (currentVal.length === 0 || currentVal.endsWith('\n')) ? '' : '\n';
+        textarea.value += `${prefix}${actorName}: `;
+        textarea.focus();
+        textarea.selectionStart = textarea.value.length;
+        textarea.selectionEnd = textarea.value.length;
+    }
+
+    // Load .txt file content
+    function readScriptFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('scriptText').value = e.target.result;
+        };
+        reader.readAsText(file);
+    }
+
+    // Main generate function
+    async function requestAudio() {
+        let rawUrl = document.getElementById('apiUrl').value.trim();
+        const script = document.getElementById('scriptText').value.trim();
+        const btn = document.getElementById('generateBtn');
+        const statusBox = document.getElementById('statusBox');
+        const audioCard = document.getElementById('audioCard');
+        const audioPlayer = document.getElementById('audioPlayer');
+
+        if (!rawUrl) {
+            alert('कृपया Colab का Backend URL (LocalTunnel या Ngrok) डालें!');
+            return;
+        }
+
+        if (!script) {
+            alert('कृपया पहले स्क्रिप्ट लिखें या .txt फाइल अपलोड करें!');
+            return;
+        }
+
+        // Clean URL trailing slashes
+        const apiUrl = rawUrl.replace(/\/+$/, "");
+
+        btn.disabled = true;
+        audioCard.style.display = 'none';
+        statusBox.className = 'status-box loading';
+        statusBox.innerHTML = '⏳ बैकएंड इंजन आवाज़ें प्रोसेस कर रहा है... डायलॉग्स मर्ज हो रहे हैं...';
+
+        try {
+            // LocalTunnel bypass header is included by default
+            const response = await fetch(`${apiUrl}/generate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Bypass-Tunnel-Reminder': 'true'
+                },
+                body: JSON.stringify({ script: script })
+            });
+
+            if (!response.ok) {
+                const errJson = await response.json().catch(() => null);
+                throw new Error(errJson?.error || `Server Error (${response.status})`);
+            }
+
+            const blob = await response.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+
+            // Set Audio Preview
+            audioPlayer.src = downloadUrl;
+            audioCard.style.display = 'block';
+
+            // Auto-trigger MP3 Download
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = downloadUrl;
+            a.download = `voiceover_${Date.now()}.mp3`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+
+            statusBox.className = 'status-box success';
+            statusBox.innerHTML = '✅ ऑडियो तैयार हो गया और डाउनलोड हो चुका है!';
+        } catch (error) {
+            statusBox.className = 'status-box error';
+            statusBox.innerHTML = `❌ एरर: ${error.message}. सुनिश्चित करें कि Colab में सर्वर चालू है और टनल अनलॉक है।`;
+        } finally {
+            btn.disabled = false;
+        }
+    }
+</script>
+</body>
+</html>
