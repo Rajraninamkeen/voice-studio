@@ -3,114 +3,274 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice Studio - With Custom Voice Upload</title>
+    <title>Multi-Actor Voice Assignment Studio</title>
     <style>
-        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: #0b1329; color: #f1f5f9; margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .card { background: #162038; border-radius: 12px; max-width: 650px; width: 100%; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
-        h1 { font-size: 20px; color: #38bdf8; text-align: center; margin-top: 0; }
-        label { display: block; margin-top: 15px; font-size: 13px; font-weight: bold; color: #94a3b8; }
-        textarea, input[type="text"], input[type="file"] {
-            width: 100%; padding: 10px; margin-top: 6px; border-radius: 6px; border: 1px solid #293859;
-            background: #0b1329; color: #fff; font-size: 14px;
+        :root {
+            --bg: #090d16;
+            --card: #131b2e;
+            --accent: #38bdf8;
+            --accent-hover: #0284c7;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --border: #23304c;
+            --highlight: #1e293b;
         }
-        .user-box { background: #1e293b; border: 1px dashed #38bdf8; border-radius: 8px; padding: 14px; margin-top: 15px; }
-        .tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-        .tag { background: #0f172a; border: 1px solid #334155; padding: 4px 10px; border-radius: 15px; font-size: 12px; cursor: pointer; }
-        .tag:hover { background: #0284c7; }
-        button {
-            width: 100%; margin-top: 20px; padding: 12px; background: #0284c7; color: white;
-            border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer;
-        }
-        button:hover { background: #0369a1; }
-        #status { margin-top: 15px; text-align: center; font-size: 14px; color: #38bdf8; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; justify-content: center; padding: 24px 14px; }
+        .studio-card { width: 100%; max-width: 720px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
+
+        h1 { font-size: 22px; color: var(--accent); text-align: center; margin-bottom: 4px; }
+        .sub-header { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 22px; }
+
+        label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+        input[type="text"], textarea { width: 100%; background: #0b1120; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: 14px; outline: none; }
+        input[type="text"]:focus, textarea:focus { border-color: var(--accent); }
+        textarea { resize: vertical; min-height: 120px; line-height: 1.5; }
+
+        .section-box { background: var(--highlight); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin: 18px 0; }
+        .section-box h3 { font-size: 14px; color: var(--accent); margin-bottom: 12px; }
+
+        /* Voice Preview Bar */
+        .preview-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        select { background: #0b1120; border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 13px; outline: none; }
+        .btn-preview { background: #0284c7; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+        .btn-preview:hover { background: #0369a1; }
+
+        /* Dynamic Actor Row */
+        .actor-row { background: #0e1526; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .actor-header { font-weight: bold; color: var(--accent); font-size: 14px; }
+        .actor-controls { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: center; }
+        @media (max-width: 600px) { .actor-controls { grid-template-columns: 1fr; } }
+
+        input[type="file"] { font-size: 11px; color: var(--muted); }
+
+        .btn-submit { width: 100%; background: var(--accent); color: #0b1120; border: none; padding: 14px; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 10px; transition: background 0.2s; }
+        .btn-submit:hover { background: #7dd3fc; }
+
+        #statusBox { margin-top: 16px; text-align: center; font-size: 14px; }
+        #globalAudio { width: 100%; margin-top: 14px; display: none; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h1>🎙️ AI + Custom Voice Studio</h1>
+<div class="studio-card">
+    <h1>🎭 Multi-Actor Voice Studio</h1>
+    <p class="sub-header">आवाज़ सुनें, हर किरदार को मनपसंद आवाज़ दें और पूरी बातचीत डाउनलोड करें</p>
 
-    <label>1. बैकएंड API Link (LocalTunnel URL):</label>
-    <input type="text" id="apiUrl" placeholder="https://xxxx.loca.lt">
-
-    <!-- खुद की आवाज़ अपलोड करने का बॉक्स -->
-    <div class="user-box">
-        <label style="margin-top:0; color:#38bdf8;">👤 आपकी खुद की आवाज़ (Custom Voice Upload):</label>
-        <label style="font-weight:normal; font-size:12px;">स्क्रिप्ट में आपका नाम क्या होगा? (उदा. Sonu या Me):</label>
-        <input type="text" id="myActorName" value="Sonu">
-
-        <label style="font-weight:normal; font-size:12px; margin-top:8px;">अपनी बोली हुई ऑडियो फाइल अपलोड करें (.mp3/.wav/.m4a):</label>
-        <input type="file" id="myAudioFile" accept="audio/*">
+    <!-- API Link -->
+    <div style="margin-bottom: 18px;">
+        <label>1. Colab API URL (LocalTunnel Link):</label>
+        <input type="text" id="apiUrl" placeholder="उदा. https://rude-rings-carry.loca.lt">
     </div>
 
-    <label>रेडीमेड AI एक्टर्स (क्लिक करके स्क्रिप्ट में जोड़ें):</label>
-    <div class="tag-list">
-        <span class="tag" onclick="insertActor('Sonu')">Sonu (आपकी आवाज़)</span>
-        <span class="tag" onclick="insertActor('Priya')">Priya (AI)</span>
-        <span class="tag" onclick="insertActor('Rohan')">Rohan (AI)</span>
-        <span class="tag" onclick="insertActor('Amitabh')">Amitabh (AI)</span>
-        <span class="tag" onclick="insertActor('Shinchan')">Shinchan (AI)</span>
-        <span class="tag" onclick="insertActor('DadaJi')">DadaJi (AI)</span>
+    <!-- Voice Preview Bar -->
+    <div class="section-box">
+        <h3>🎧 आवाज़ का नमूना (Preview) सुनें:</h3>
+        <div class="preview-bar">
+            <select id="previewSelect"></select>
+            <button class="btn-preview" onclick="testVoiceAudio()">▶ आवाज़ सुनें</button>
+            <span id="previewLoading" style="font-size:12px; color:var(--muted); margin-left:6px;"></span>
+        </div>
     </div>
 
-    <label>2. अपनी बातचीत की स्क्रिप्ट लिखें:</label>
-    <textarea id="scriptText" rows="6" placeholder="Sonu: अरे प्रिया, यह तो मेरी अपनी रिकॉर्ड की हुई आवाज़ है!&#10;Priya: और यह मेरी AI आवाज़ है! दोनों एक साथ मर्ज हो रहे हैं।"></textarea>
+    <!-- Script Textbox -->
+    <div style="margin-bottom: 18px;">
+        <label>2. अपनी बातचीत की स्क्रिप्ट लिखें (Name: Dialogue):</label>
+        <textarea id="scriptText" oninput="parseActors()" placeholder="Sonu: अरे प्रिया, नया सिस्टम कैसा लगा?&#10;Priya: बहुत कमाल है! अब मैं कोई भी आवाज़ चुन सकती हूँ।&#10;Kabir: और अपनी आवाज़ भी अपलोड कर सकते हैं।"></textarea>
+    </div>
 
-    <button onclick="generateHybridAudio()">⚡ ऑडियो जनरेट और डाउनलोड करें</button>
-    <div id="status"></div>
+    <!-- Detected Actors & Mapping -->
+    <div class="section-box">
+        <h3>👥 स्क्रिप्ट में मिले किरदार (हर किसी के लिए आवाज़ चुनें):</h3>
+        <div id="actorsContainer">
+            <p style="color: var(--muted); font-size: 13px;">स्क्रिप्ट में डायलॉग लिखें, किरदार यहाँ अपने आप आ जाएँगे...</p>
+        </div>
+    </div>
+
+    <button class="btn-submit" onclick="submitPipeline()">⚡ फाइनल ऑडियो तैयार और डाउनलोड करें</button>
+
+    <div id="statusBox"></div>
+    <audio id="globalAudio" controls></audio>
 </div>
 
 <script>
-function insertActor(name) {
-    const area = document.getElementById('scriptText');
-    area.value += (area.value.endsWith('\n') || area.value === '' ? '' : '\n') + `${name}: `;
-    area.focus();
+const VOICES_LIST = [
+    "Rohan (Hindi Male)", "Priya (Hindi Female)", "Amitabh (Deep Male)",
+    "Kabir (Calm Podcast)", "Vikram (News Anchor)", "Aman (Casual Male)",
+    "Anjali (Sweet Female)", "Kavya (Professional Female)", "Pooja (Energetic Female)",
+    "Neha (Soft Storyteller)", "DadaJi (Elder Male)", "Dadi (Elder Female)",
+    "Sadhu (Spiritual Tone)", "HistoricalNarrator (Documentary)", "Shinchan (Funny Cartoon)",
+    "Kid (Young Child)", "Villain (Dark Horror)", "Ghost (Whispering/Creepy)",
+    "Robot (Sci-Fi / AI)", "Doraemon (Anime Style)"
+];
+
+// पेज लोड पर प्रीव्यू ड्रॉपडाउन भरना
+window.onload = () => {
+    const previewSelect = document.getElementById('previewSelect');
+    VOICES_LIST.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.innerText = v;
+        previewSelect.appendChild(opt);
+    });
+    parseActors();
+};
+
+function getApiUrl() {
+    let url = document.getElementById('apiUrl').value.trim();
+    if (!url) return null;
+    if (!url.startsWith("http://") && !url.startsWith("https://")) url = "https://" + url;
+    return url.replace(/\/+$/, "");
 }
 
-async function generateHybridAudio() {
-    const apiUrl = document.getElementById('apiUrl').value.trim();
-    const script = document.getElementById('scriptText').value.trim();
-    const myActorName = document.getElementById('myActorName').value.trim();
-    const myAudioFile = document.getElementById('myAudioFile').files[0];
-    const status = document.getElementById('status');
+// आवाज़ का नमूना सुनाने का फंक्शन
+async function testVoiceAudio() {
+    const apiUrl = getApiUrl();
+    if (!apiUrl) return alert("कृपया पहले Colab API URL डालें!");
 
-    if (!apiUrl || !script) {
-        alert("कृपया बैकएंड URL और स्क्रिप्ट भरें!");
+    const voice = document.getElementById('previewSelect').value;
+    const info = document.getElementById('previewLoading');
+    info.innerText = "लोड हो रहा है...";
+
+    try {
+        const res = await fetch(`${apiUrl}/preview-voice?voice_name=${encodeURIComponent(voice)}`, {
+            headers: { "Bypass-Tunnel-Reminder": "true" }
+        });
+        if (!res.ok) throw new Error("Preview नहीं मिल सका");
+
+        const blob = await res.blob();
+        const audio = new Audio(URL.createObjectURL(blob));
+        audio.play();
+        info.innerText = "🔊 बज रहा है...";
+        audio.onended = () => info.innerText = "";
+    } catch (e) {
+        info.innerText = "❌ एरर!";
+        alert("आवाज़ लोड नहीं हो सकी: " + e.message);
+    }
+}
+
+let detectedActors = [];
+
+// स्क्रिप्ट से एक्टर्स निकालना
+function parseActors() {
+    const text = document.getElementById('scriptText').value;
+    const regex = /^([A-Za-z0-9\u0900-\u097F\s_-]+):/gm;
+    let match;
+    const set = new Set();
+
+    while ((match = regex.exec(text)) !== null) {
+        set.add(match[1].trim());
+    }
+
+    detectedActors = Array.from(set);
+    const container = document.getElementById('actorsContainer');
+
+    if (detectedActors.length === 0) {
+        container.innerHTML = '<p style="color: var(--muted); font-size: 13px;">स्क्रिप्ट में डायलॉग लिखें (जैसे Actor: Hello)...</p>';
         return;
     }
 
+    container.innerHTML = '';
+    detectedActors.forEach(actor => {
+        const row = document.createElement('div');
+        row.className = 'actor-row';
+
+        let optionsHtml = VOICES_LIST.map(v => {
+            // नाम के आधार पर स्मार्ट डिफॉल्ट
+            let selected = "";
+            if (actor.toLowerCase().includes("priya") && v.includes("Priya")) selected = "selected";
+            else if (actor.toLowerCase().includes("amitabh") && v.includes("Amitabh")) selected = "selected";
+            else if (actor.toLowerCase().includes("kabir") && v.includes("Kabir")) selected = "selected";
+            else if (actor.toLowerCase().includes("dada") && v.includes("DadaJi")) selected = "selected";
+            return `<option value="${v}" ${selected}>${v}</option>`;
+        }).join('');
+
+        row.innerHTML = `
+            <div class="actor-header">👤 किरदार: ${actor}</div>
+            <div class="actor-controls">
+                <div>
+                    <label style="margin:0 0 4px 0; font-size:11px;">AI आवाज़ चुनें:</label>
+                    <select id="voice_for_${actor}" style="width:100%;">${optionsHtml}</select>
+                </div>
+                <div>
+                    <label style="margin:0 0 4px 0; font-size:11px;">या अपनी खुद की ऑडियो फाइल दें (Optional):</label>
+                    <input type="file" id="file_for_${actor}" accept="audio/*">
+                </div>
+                <button type="button" class="btn-preview" style="height:36px; margin-top:14px;" onclick="previewSelectedFor('${actor}')">▶ सुनें</button>
+            </div>
+        `;
+        container.appendChild(row);
+    });
+}
+
+// किसी एक्टर के सामने चुनी हुई आवाज़ को तुरंत सुनाना
+function previewSelectedFor(actor) {
+    const sel = document.getElementById(`voice_for_${actor}`);
+    if (sel) {
+        document.getElementById('previewSelect').value = sel.value;
+        testVoiceAudio();
+    }
+}
+
+// फाइनल ऑडियो जनरेट करना
+async function submitPipeline() {
+    const apiUrl = getApiUrl();
+    const script = document.getElementById('scriptText').value.trim();
+    const status = document.getElementById('statusBox');
+    const player = document.getElementById('globalAudio');
+
+    if (!apiUrl) return alert("कृपया Colab API URL डालें!");
+    if (!script) return alert("कृपया स्क्रिप्ट लिखें!");
+
+    status.style.color = "var(--accent)";
+    status.innerText = "⏳ चुनी हुई आवाज़ों में ऑडियो जनरेट हो रहा है...";
+    player.style.display = "none";
+
+    const mapping = {};
     const formData = new FormData();
     formData.append("script", script);
-    formData.append("my_actor_name", myActorName);
-    if (myAudioFile) {
-        formData.append("my_voice_file", myAudioFile);
-    }
 
-    status.innerText = "⏳ आपकी आवाज़ और AI आवाज़ों को मर्ज किया जा रहा है...";
+    detectedActors.forEach(actor => {
+        const voice = document.getElementById(`voice_for_${actor}`).value;
+        mapping[actor] = voice;
+
+        const fileInput = document.getElementById(`file_for_${actor}`);
+        if (fileInput && fileInput.files[0]) {
+            formData.append(`file_${actor}`, fileInput.files[0]);
+        }
+    });
+
+    formData.append("mapping", JSON.stringify(mapping));
 
     try {
-        const res = await fetch(`${apiUrl}/generate-hybrid`, {
+        const res = await fetch(`${apiUrl}/generate-custom`, {
             method: "POST",
-            headers: {
-                "Bypass-Tunnel-Reminder": "true"
-            },
+            headers: { "Bypass-Tunnel-Reminder": "true" },
             body: formData
         });
 
-        if (!res.ok) throw new Error("ऑडियो बनाने में एरर आया!");
+        if (!res.ok) throw new Error("ऑडियो बनाने में समस्या आई");
 
         const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+
+        player.src = url;
+        player.style.display = "block";
+
         const a = document.createElement("a");
-        a.href = window.URL.createObjectURL(blob);
-        a.download = "final_hybrid_dialogue.mp3";
+        a.href = url;
+        a.download = "final_dialogues.mp3";
         a.click();
 
-        status.innerText = "✅ आपकी आवाज़ के साथ पूरा ऑडियो डाउनलोड हो गया!";
+        status.style.color = "#22c55e";
+        status.innerText = "✅ पूरी बातचीत डाउनलोड हो गई!";
     } catch (e) {
+        status.style.color = "#ef4444";
         status.innerText = "❌ एरर: " + e.message;
     }
 }
 </script>
+
 </body>
 </html>
